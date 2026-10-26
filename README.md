@@ -45,7 +45,23 @@ $odataId = 'https://graph.microsoft.com/v1.0/directoryObjects/' + $user.Id
 New-MgDirectoryRoleMemberByRef -DirectoryRoleId $role.Id -OdataId $odataId
 ```
 
-I then created **Allan Yoo** as a standard user, configured the usage location, identified an available Office 365 E5 license SKU, and assigned the license with `Set-MgUserLicense`. I also created a Sales security group and practiced managing its membership through Microsoft Graph.
+Here, `$user` holds the previously created administrative user object. Its `.Id` identifies the account being added to the directory role.
+
+I then created **Allan Yoo** as a standard user, configured the usage location, and looked up the available Office 365 E5 license SKU before assigning it:
+
+```powershell
+$skuId = (
+    Get-MgSubscribedSku |
+    Where-Object { $_.SkuPartNumber -eq 'Office_365_E5_(no_Teams)' }
+).SkuId
+
+Set-MgUserLicense `
+    -UserId "Allan@$verifiedDomain" `
+    -AddLicenses @{SkuId = $skuId} `
+    -RemoveLicenses @()
+```
+
+`$skuId` comes from the tenant's subscribed licenses, while `$verifiedDomain` is the verified domain used in Allan's account name. I also created a Sales security group and practiced managing its membership through Microsoft Graph.
 
 **Why it matters:** Identity, licensing, and access are prerequisites for the collaboration services configured later in the project. Using the Graph objects and their IDs also helps link dependent administrative commands accurately.
 
@@ -86,6 +102,8 @@ New-SPOSite `
 
 Get-SPOSite | Format-List Url, Status
 ```
+
+`$verifiedDomainShort` represents the tenant prefix used for its SharePoint address.
 
 | Setting | Value |
 |---|---|
